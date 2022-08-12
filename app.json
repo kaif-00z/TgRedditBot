@@ -1,0 +1,64 @@
+{
+    "name": "RedditTgBot",
+    "description": "A Normal Telegram Bot Which can control reddit from telegram",
+    "logo": "https://telegra.ph/file/2a37745048a2d07323e05.jpg",
+    "keywords": ["Telegram","Python", "Reddit","Stream","Interaction"],
+    "repository": "https://github.com/kaif-00z/RedditTgBot",
+    "success_url": "https://t.me/BotsBakery",
+    "env": {
+        "API_ID": {
+            "description": "You api id, from my.telegram.org or @apiScrapperRoBot.",
+            "value": ""
+        },
+        "API_HASH": {
+            "description": "You api hash, from my.telegram.org or @apiScrapperRoBot.",
+            "value": ""
+        },
+        "BOT_TOKEN": {
+            "description": "Make a bot from @BotFather, and enter it's api token here.",
+            "value": ""
+        },
+        "OWNER": {
+            "description": "Get ur Id Of Telegram nd Paste Here.",
+            "value": ""
+        },
+        "REDDIT_CLIENT_ID": {
+            "description": "Put your reddit client id.",
+            "value": "",
+        },
+        "REDDIT_CLIENT_SECRET": {
+            "description": "Put your reddit client secret.",
+            "value": "",
+        },
+        "REDDIT_USERNAME": {
+            "description": "Put your reddit username.",
+            "value": "",
+        },
+        "REDDIT_PASSWORD": {
+            "description": "Put your reedit password.",
+            "value": "",
+        },
+        "REDIS_URI": {
+            "description": "Redis endpoint URL, from redislabs.com",
+            "value": ""
+        },
+        "REDIS_PASSWORD": {
+            "description": "Redis endpoint password, from redislabs.com",
+            "value": ""
+        }
+    },
+    "formation": {
+        "bot": {
+            "quantity": 1,
+            "size": "free"
+        }
+    },
+    "buildpacks": [
+    {
+        "url":"heroku/python"
+    },
+    {
+        "url":"https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest"
+    }
+    ]
+}
