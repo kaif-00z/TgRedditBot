@@ -1,9 +1,9 @@
 {
-    "name": "RedditTgBot",
+    "name": "TgRedditBot",
     "description": "A Normal Telegram Bot Which can control reddit from telegram",
     "logo": "https://telegra.ph/file/2a37745048a2d07323e05.jpg",
     "keywords": ["Telegram","Python", "Reddit","Stream","Interaction"],
-    "repository": "https://github.com/kaif-00z/RedditTgBot",
+    "repository": "https://github.com/kaif-00z/TgRedditBot",
     "success_url": "https://t.me/BotsBakery",
     "env": {
         "API_ID": {
