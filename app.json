@@ -1,9 +1,9 @@
 {
-    "name": "RedditTgBot",
+    "name": "TgRedditBot",
     "description": "A Normal Telegram Bot Which can control reddit from telegram",
     "logo": "https://telegra.ph/file/2a37745048a2d07323e05.jpg",
     "keywords": ["Telegram","Python", "Reddit","Stream","Interaction"],
-    "repository": "https://github.com/kaif-00z/RedditTgBot",
+    "repository": "https://github.com/kaif-00z/TgRedditBot",
     "success_url": "https://t.me/BotsBakery",
     "env": {
         "API_ID": {
@@ -24,19 +24,19 @@
         },
         "REDDIT_CLIENT_ID": {
             "description": "Put your reddit client id.",
-            "value": "",
+            "value": ""
         },
         "REDDIT_CLIENT_SECRET": {
             "description": "Put your reddit client secret.",
-            "value": "",
+            "value": ""
         },
         "REDDIT_USERNAME": {
             "description": "Put your reddit username.",
-            "value": "",
+            "value": ""
         },
         "REDDIT_PASSWORD": {
             "description": "Put your reedit password.",
-            "value": "",
+            "value": ""
         },
         "REDIS_URI": {
             "description": "Redis endpoint URL, from redislabs.com",
