@@ -18,11 +18,14 @@ import os
 import sys
 from datetime import datetime as dt
 from logging import DEBUG, INFO, FileHandler, StreamHandler, basicConfig, getLogger
+from platform import python_version, release, system
 from traceback import format_exc
 
 from asyncpraw import Reddit
+from asyncpraw.const import __version__ as praw_version
 from redis import Redis
 from telethon import Button, TelegramClient, events
+from telethon import __version__ as telethon_version
 from telethon.tl.types import DocumentAttributeVideo
 from telethon.utils import get_display_name
 
@@ -131,11 +134,6 @@ async def loggs(event):
 
 
 async def about(event, edit=False):
-    from platform import python_version, release, system
-
-    from asyncpraw.const import __version__ as praw_version
-    from telethon import __version__ as telethon_version
-
     x = ABOUT.format(
         ts(int((dt.now() - UPTIME).seconds) * 1000),
         f"{python_version()}",
