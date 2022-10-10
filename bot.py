@@ -18,11 +18,15 @@ import os
 import sys
 from datetime import datetime as dt
 from logging import DEBUG, INFO, FileHandler, StreamHandler, basicConfig, getLogger
+from platform import python_version, release, system
 from traceback import format_exc
 
 from asyncpraw import Reddit
+from asyncpraw.const import __version__ as praw_version
 from redis import Redis
-from telethon import Button, TelegramClient, events
+from telethon import Button, TelegramClient
+from telethon import __version__ as telethon_version
+from telethon import events
 from telethon.tl.types import DocumentAttributeVideo
 from telethon.utils import get_display_name
 
@@ -30,12 +34,12 @@ from helper import *
 from strings import *
 from var import Var
 
-file = "tgreddit_bot.log"
+file = "TgRedditBot.log"
 if os.path.exists(file):
     os.remove(file)
 
 basicConfig(
-    format="%(asctime)s || %(name)s [%(levelname)s] : %(message)s",
+    format="[%(levelname)s] [%(asctime)s] [%(name)s] : %(message)s",
     handlers=[FileHandler(file), StreamHandler()],
     level=INFO,
     datefmt="%m/%d/%Y, %H:%M:%S",
@@ -58,7 +62,8 @@ try:
     bot = TelegramClient(None, Var.API_ID, Var.API_HASH).start(bot_token=Var.BOT_TOKEN)
     LOGS.info("Successfully Connected with Telegram")
 except Exception as e:
-    LOGS.critical(str(e))
+    LOGS.critical("Something Went Wrong While Connecting To Telegram")
+    LOGS.error(str(e))
     exit()
 
 try:
@@ -72,7 +77,8 @@ try:
     )
     LOGS.info("Successfully Connected with Reddit")
 except Exception as exc:
-    LOGS.critical(str(exc))
+    LOGS.critical("Something Went Wrong While Connecting To Reddit")
+    LOGS.error(str(exc))
     exit()
 
 try:
@@ -87,11 +93,13 @@ try:
     )
     LOGS.info("successfully connected to Redis database")
 except Exception as eo:
-    LOGS.critical(str(eo))
+    LOGS.critical("Something Went Wrong While Connecting To Redis")
+    LOGS.error(str(eo))
     exit()
 
 UPTIME = dt.now()
 FUTURE = {}
+# STREAM_INBOX = []
 
 # ================Show Case===============================================
 
@@ -123,7 +131,7 @@ async def help(event):
 async def loggs(event):
     xx = await event.reply(PRO)
     await event.reply(
-        file="tgreddit_bot.log",
+        file=file,
         force_document=True,
         thumb="thumb.jpg",
     )
@@ -131,11 +139,6 @@ async def loggs(event):
 
 
 async def about(event, edit=False):
-    from platform import python_version, release, system
-
-    from asyncpraw.const import __version__ as praw_version
-    from telethon import __version__ as telethon_version
-
     x = ABOUT.format(
         ts(int((dt.now() - UPTIME).seconds) * 1000),
         f"{python_version()}",
@@ -169,11 +172,10 @@ async def restart(event):
         return await event.reply(AD)
     xx = await event.reply(PRO)
     try:
-        """
-        await bash("git pull")
+        if os.path.exists(".git"):
+            await bash("git pull")
         if os.path.exists("requirements.txt"):
             await bash("pip3 install -U -r requirements.txt")
-        """
         await xx.edit("`Restarting...`")
         dB.set("RESTART", str([xx.chat_id, xx.id]))
         os.execl(sys.executable, sys.executable, "bot.py")
@@ -194,10 +196,19 @@ async def on_start():
             "wget https://telegra.ph/file/2a37745048a2d07323e05.jpg -O thumb.jpg"
         )
         xxx = eval(dB.get("WATCH_LIST") or "{}")
-        for username in xxx.keys():
-            future = asyncio.ensure_future(watch(username, xxx[username]))
-            if username not in FUTURE:
-                FUTURE.update({username: future})
+        if xxx:
+            for username in xxx.keys():
+                vlu = username.split("|")
+                future = asyncio.ensure_future(watch(vlu[0], vlu[1]))
+                if username not in FUTURE:
+                    FUTURE.update({username: future})
+            LOGS.info("Subreddit(s) Streaming Started...")
+        """
+        if dB.get("INBOX_STREAM"):
+            _future = asyncio.ensure_future(inbox_stream())
+            STREAM_INBOX.append(_future)
+            LOGS.info("Inbox Streaming Started...")
+        """
     except Exception:
         await bash(
             "wget https://telegra.ph/file/2a37745048a2d07323e05.jpg -O thumb.jpg"
@@ -441,6 +452,7 @@ async def front_feed(event):
                     link_preview=False,
                     parse_mode="HTML",
                 )
+            await asyncio.sleep(1)
         await xx.delete()
     except Exception as error:
         await xx.edit(f"`Error` - {error}")
@@ -506,13 +518,13 @@ async def watcher(event):
         return await xx.edit("`UserName Not Found`")
     try:
         w_list = eval(dB.get("WATCH_LIST") or "{}")
-        future = asyncio.ensure_future(watch(username, event.sender_id))
-        if username not in FUTURE:
-            FUTURE.update({username: future})
-            w_list.update({username: event.sender_id})
+        future = asyncio.ensure_future(watch(username, event.chat_id))
+        if f"{username}|{event.chat_id}" not in FUTURE:
+            FUTURE.update({f"{username}|{event.chat_id}": future})
+            w_list.update({f"{username}|{event.chat_id}": event.chat_id})
             dB.set("WATCH_LIST", str(w_list))
             return await xx.edit(
-                f"`Successfully Added This on Watching List, To Unwatch this do` `/unwatch {username}`"
+                f"`Successfully Added This on This Chat's Watching List, To Unwatch this do` `/unwatch {username}`"
             )
         await xx.edit("`Already on Watching List`")
     except Exception as error:
@@ -529,15 +541,18 @@ async def unwatcher(event):
     if not username:
         return await xx.edit("`Username Not Given`")
     try:
-        if FUTURE.get(username):
+        _username = f"{username}|{event.chat_id}"
+        if FUTURE.get(_username):
             w_list = eval(dB.get("WATCH_LIST") or "{}")
-            FUTURE[username].cancel()
-            del FUTURE[username]
-            if w_list.get(username):
-                del w_list[username]
+            FUTURE[_username].cancel()
+            del FUTURE[_username]
+            if w_list.get(_username):
+                del w_list[_username]
                 dB.set("WATCH_LIST", str(w_list))
-            return await xx.edit("`Succesfully Removed it from Watching List`")
-        await xx.edit("`Username Not Found In Watching List`")
+            return await xx.edit(
+                "`Succesfully Removed it from This Chat's Watching List`"
+            )
+        await xx.edit("`Username Not Found In This Chat's Watching List`")
     except Exception as error:
         await xx.edit(f"`Error` - {error}")
         LOGS.error(format_exc())
@@ -547,14 +562,41 @@ async def unwatcher(event):
 async def watch_list(event):
     if str(event.sender_id) not in Var.OWNER:
         return await event.reply(AD)
-    xx = await event.reply(PRO)
+    await event.reply(
+        "`Choose...`",
+        buttons=[
+            [
+                Button.inline("All Chats", data="alchwlst"),
+                Button.inline("This Chat Only", data="tschwlst"),
+            ]
+        ],
+    ),
+
+
+@bot.on(events.callbackquery.CallbackQuery(data=re.compile("alchwlst")))
+async def lst_watch(event):
     try:
-        txt = "**Watch List**\n\n"
+        txt = "**Watch List Of All Chats**\n\n"
         for u in FUTURE.keys():
-            txt += f"[{u}](https://reddit.com/r/{u})\n"
-        await xx.edit(txt)
+            vlu = u.split("|")
+            txt += f"[{vlu[0]}](https://reddit.com/r/{vlu[0]}) - `[{vlu[1]}]`\n"
+        await event.edit(txt, link_preview=False)
     except Exception as error:
-        await xx.edit(f"`Error` - {error}")
+        await event.edit(f"`Error` - {error}")
+        LOGS.error(format_exc())
+
+
+@bot.on(events.callbackquery.CallbackQuery(data=re.compile("tschwlst")))
+async def lst_ch_watch(event):
+    try:
+        txt = "**Watch List Of This Chat**\n\n"
+        for u in FUTURE.keys():
+            vlu = u.split("|")
+            if str(event.chat_id) in vlu:
+                txt += f"[{vlu[0]}](https://reddit.com/r/{vlu[0]})\n"
+        await event.edit(txt, link_preview=False)
+    except Exception as error:
+        await event.edit(f"`Error` - {error}")
         LOGS.error(format_exc())
 
 
@@ -563,7 +605,7 @@ async def incoreply(event):
     if not event.reply_to:
         return
     if str(event.sender_id) not in Var.OWNER:
-        return await event.reply(AD)
+        return
     reply = await event.get_reply_message()
     msg = event.text
     try:
@@ -577,7 +619,7 @@ async def incoreply(event):
     xx = await event.reply(PRO)
     try:
         if msg.startswith((".", "/")):
-            return await xx.edit("`You Can't start the message with'.' and '/'`")
+            return await xx.edit("`You Can't start the message with '.' and '/'`")
         submission = await reddit.submission(url=url)
         await submission.reply(msg)
         await xx.edit("`Successfully Replied`")
@@ -639,6 +681,72 @@ async def subinfo(event):
     except Exception as error:
         await xx.edit(f"`Error` - {error}")
         LOGS.error(format_exc())
+
+
+""" Todo Stuffs"""
+
+"""
+
+@bot.on(events.NewMessage(incoming=True, pattern="^/inbox$"))
+async def _inbox_opt(event):
+    if str(event.sender_id) not in Var.OWNER:
+        return await event.reply(AD)
+    btn = [
+        [
+            Button.inline("Enable it", data="strmin"),
+            Button.inline("Disable it", data="disstrmin"),
+        ]
+    ]
+    await event.reply("`Stream Inbox:`", buttons=btn)
+
+
+@bot.on(events.callbackquery.CallbackQuery(data=re.compile("strmin")))
+async def _stream_inbox(event):
+    xx = await event.edit(PRO)
+    if STREAM_INBOX:
+        return await xx.edit("`Inbox Is Already Streaming... 😑😑`")
+    try:
+        future = asyncio.ensure_future(inbox_stream())
+        STREAM_INBOX.append(future)
+        dB.set("INBOX_STREAM", "True")
+        await xx.edit("`Successfully Enabled Inbox Streaming...`")
+        LOGS.info("Successfully Enabled Inbox Streaming...")
+    except Exception as error:
+        await xx.edit(f"`Error` - {error}")
+        LOGS.error(format_exc())
+
+
+@bot.on(events.callbackquery.CallbackQuery(data=re.compile("disstrmin")))
+async def _stop_stream_inbox(event):
+    xx = await event.edit(PRO)
+    if not STREAM_INBOX:
+        return await xx.edit("`Inbox Streaming Already Disabled... 😑😑`")
+    try:
+        STREAM_INBOX[0].cancel()
+        STREAM_INBOX.clear()
+        dB.delete("INBOX_STREAM")
+        await xx.edit("`Successfully Disabled Inbox Streaming...`")
+        LOGS.info("Successfully Disabled Inbox Streaming...")
+    except Exception as error:
+        await xx.edit(f"`Error` - {error}")
+        LOGS.error(format_exc())
+
+
+async def inbox_stream():
+    ids = [int(id) for id in Var.OWNER_ID.split()]
+    try:
+        async for pm in reddit.inbox.stream(skip_existing=True):
+            for id in ids:
+                await bot.send_message(
+                    id,
+                    INBOX.format(pm.subject, pm.body, pm.author, pm.was_comment),
+                    buttons=[[Button.url("VIEW", url=f"https://redd.it/{pm.id}")]],
+                )
+    except Exception as error:
+        for id in ids:
+            await bot.send_message(id, f"`Error` - {error}")
+        LOGS.error(format_exc())
+"""
 
 
 LOGS.info("Bot has Started...")
