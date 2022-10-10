@@ -30,6 +30,7 @@ from helper import *
 from strings import *
 from var import Var
 
+
 file = "tgreddit_bot.log"
 if os.path.exists(file):
     os.remove(file)
@@ -56,7 +57,7 @@ for logger_name in ("asyncpraw", "asyncprawcore"):
 try:
     LOGS.info("Trying Connect With Telegram")
     bot = TelegramClient(None, Var.API_ID, Var.API_HASH).start(bot_token=Var.BOT_TOKEN)
-    LOGS.info("Successfully Connected with Telegram")
+    LOGS.info("Successfully Connected with Telegram.")
 except Exception as e:
     LOGS.critical(str(e))
     exit()
@@ -70,7 +71,7 @@ try:
         username=Var.REDDIT_USERNAME,
         password=Var.REDDIT_PASSWORD,
     )
-    LOGS.info("Successfully Connected with Reddit")
+    LOGS.info("Successfully Connected to your Reddit Account.")
 except Exception as exc:
     LOGS.critical(str(exc))
     exit()
@@ -85,13 +86,16 @@ try:
         charset="utf-8",
         decode_responses=True,
     )
-    LOGS.info("successfully connected to Redis database")
+    LOGS.info("Successfully Connected to Redis Database.")
 except Exception as eo:
     LOGS.critical(str(eo))
     exit()
 
+
 UPTIME = dt.now()
 FUTURE = {}
+__me = None
+
 
 # ================Show Case===============================================
 
@@ -121,12 +125,10 @@ async def help(event):
 
 @bot.on(events.NewMessage(incoming=True, pattern="^/logs$"))
 async def loggs(event):
+    if str(event.sender_id) not in Var.OWNER:
+        return await event.reply(AD)
     xx = await event.reply(PRO)
-    await event.reply(
-        file="tgreddit_bot.log",
-        force_document=True,
-        thumb="thumb.jpg",
-    )
+    await event.reply(file="tgreddit_bot.log", thumb="thumb.jpg")
     await xx.delete()
 
 
@@ -185,6 +187,7 @@ async def restart(event):
 
 async def on_start():
     try:
+        __me = (await bot.get_me()).id
         xx = eval(dB.get("RESTART") or "[]")
         if xx:
             x = await bot.get_messages(xx[0], ids=xx[1])
@@ -326,7 +329,7 @@ async def pinn(event):
                     )
                 else:
                     await xx.edit(
-                        f"`Can't Pinned The Latest` [Submission]({post.url}) `Because Your Not Moderator in Following Subreddit`"
+                        f"`Can't Pin the latest` [Submission]({post.url}) `Because you're not a Moderator in that Subreddit.`"
                     )
                 return
         hmm = is_reddit_link(link)
@@ -336,7 +339,7 @@ async def pinn(event):
         await submission.subreddit.load()
         if submission.subreddit.url not in mod_in:
             return await xx.edit(
-                f"`Can't Pinned The Given` [Submission]({submission.url}) `Because Your Not Moderator in Following Subreddit`"
+                f"`Can't Pin the given` [Submission]({submission.url}) `Because you're not a Moderator in that Subreddit.`"
             )
         await submission.mod.sticky()
         await xx.edit(
@@ -370,7 +373,7 @@ async def umpinn(event):
                     )
                 else:
                     await xx.edit(
-                        f"`Can't UnPinned The Latest` [Submission]({post.url}) `Because Your Not Moderator in Following Subreddit`"
+                        f"`Can't Unpin The Latest` [Submission]({post.url}) `Because you're not a moderator in that Subreddit.`"
                     )
                 return
         hmm = is_reddit_link(link)
@@ -403,7 +406,7 @@ async def front_feed(event):
             no = 5
         number = int(no)
     except BaseException:
-        return await xx.edit("`Wrong Input, Ex-` `/feed 10`")
+        return await xx.edit("`Wrong Input. \ntry:`  `/feed 10`")
     try:
         async for submission in reddit.front.hot(limit=number):
             await submission.subreddit.load()
@@ -453,7 +456,7 @@ async def watch(username, id):
         async for submission in subreddit.stream.submissions(skip_existing=True):
             await submission.subreddit.load()
             LOGS.info(
-                f"New Submission from https://www.reddit.com{submission.subreddit.url}"
+                f"New Submission: https://www.reddit.com{submission.subreddit.url}"
             )
             if submission.url.endswith((".gif", ".jpg", ".png")):
                 await bot.send_message(
@@ -514,7 +517,7 @@ async def watcher(event):
             return await xx.edit(
                 f"`Successfully Added This on Watching List, To Unwatch this do` `/unwatch {username}`"
             )
-        await xx.edit("`Already on Watching List`")
+        await xx.edit("`Already on Watch List`")
     except Exception as error:
         await xx.edit(f"`Error` - {error}")
         LOGS.error(format_exc())
@@ -537,7 +540,7 @@ async def unwatcher(event):
                 del w_list[username]
                 dB.set("WATCH_LIST", str(w_list))
             return await xx.edit("`Succesfully Removed it from Watching List`")
-        await xx.edit("`Username Not Found In Watching List`")
+        await xx.edit("`Username Not Found In Watch List`")
     except Exception as error:
         await xx.edit(f"`Error` - {error}")
         LOGS.error(format_exc())
@@ -558,18 +561,14 @@ async def watch_list(event):
         LOGS.error(format_exc())
 
 
-@bot.on(events.NewMessage(incoming=True))
+@bot.on(events.NewMessage(incoming=True, func=lambda e: e.reply_to))
 async def incoreply(event):
-    if not event.reply_to:
-        return
     if str(event.sender_id) not in Var.OWNER:
         return await event.reply(AD)
     reply = await event.get_reply_message()
     msg = event.text
     try:
-        is_og = reply.sender_id
-        og = (await event.client.get_me()).id
-        if is_og != og:
+        if reply.sender_id != __me:
             return
         url = await reply.click(0)
     except BaseException:
@@ -577,7 +576,7 @@ async def incoreply(event):
     xx = await event.reply(PRO)
     try:
         if msg.startswith((".", "/")):
-            return await xx.edit("`You Can't start the message with'.' and '/'`")
+            return await xx.edit("`Your Message should not with '.' or '/'.`")
         submission = await reddit.submission(url=url)
         await submission.reply(msg)
         await xx.edit("`Successfully Replied`")
@@ -617,15 +616,13 @@ async def subinfo(event):
         return await xx.edit("`Username Not Given`")
     try:
         subreddit = await reddit.subreddit(username, fetch=True)
-        if len(subreddit.description) > 100:
-            desc = subreddit.description[:72] + "..."
-        else:
-            desc = subreddit.description
+        desc = subreddit.description or "None"
+        desc = desc[:72] + "..." if len(desc) > 100 else desc
         msg = SUB_INFO.format(
             subreddit.display_name,
             subreddit.id,
             f"[{subreddit.display_name}](https://www.reddit.com{subreddit.url})",
-            desc or None,
+            desc,
             subreddit.created_utc,
             subreddit.over18,
             subreddit.spoilers_enabled,
@@ -641,6 +638,6 @@ async def subinfo(event):
         LOGS.error(format_exc())
 
 
-LOGS.info("Bot has Started...")
+LOGS.info("TgRedditBot has Started..")
 bot.loop.run_until_complete(on_start())
 bot.loop.run_forever()
