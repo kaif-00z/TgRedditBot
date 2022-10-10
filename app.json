@@ -24,19 +24,19 @@
         },
         "REDDIT_CLIENT_ID": {
             "description": "Put your reddit client id.",
-            "value": "",
+            "value": ""
         },
         "REDDIT_CLIENT_SECRET": {
             "description": "Put your reddit client secret.",
-            "value": "",
+            "value": ""
         },
         "REDDIT_USERNAME": {
             "description": "Put your reddit username.",
-            "value": "",
+            "value": ""
         },
         "REDDIT_PASSWORD": {
             "description": "Put your reedit password.",
-            "value": "",
+            "value": ""
         },
         "REDIS_URI": {
             "description": "Redis endpoint URL, from redislabs.com",
@@ -48,7 +48,7 @@
         }
     },
     "formation": {
-        "bot": {
+        "worker": {
             "quantity": 1,
             "size": "free"
         }

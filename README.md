@@ -22,7 +22,7 @@
 All Enviroment Variables can be found in [`env.sample`](https://github.com/kaif-00z/TgRedditBot/blob/main/env.sample) !
 
 ## Deploy to Heroku
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?button-url=https%3A%2F%2Fgithub.com%2Fkaif-00z%2FTgRedditBot&template=https%3A%2F%2Fgithub.com%2Fkaif-00z%2FCTgRedditBot)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?button-url=https%3A%2F%2Fgithub.com%2Fkaif-00z%2FTgRedditBot&template=https%3A%2F%2Fgithub.com%2Fkaif-00z%2FTgRedditBot)
 
 ## Deploying Locally
 Fill Your Env Variables in .env file !
