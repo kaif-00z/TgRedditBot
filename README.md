@@ -24,6 +24,9 @@ All Enviroment Variables can be found in [`env.sample`](https://github.com/kaif-
 ## Deploy to Heroku
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?button-url=https%3A%2F%2Fgithub.com%2Fkaif-00z%2FTgRedditBot&template=https%3A%2F%2Fgithub.com%2Fkaif-00z%2FTgRedditBot)
 
+## Deploy to Railway
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/boH0zQ?referralCode=RZv4LZ)
+
 ## Deploying Locally
 Fill Your Env Variables in .env file !
 ```shell
