@@ -24,8 +24,9 @@ from traceback import format_exc
 from asyncpraw import Reddit
 from asyncpraw.const import __version__ as praw_version
 from redis import Redis
-from telethon import Button, TelegramClient, events
+from telethon import Button, TelegramClient
 from telethon import __version__ as telethon_version
+from telethon import events
 from telethon.tl.types import DocumentAttributeVideo
 from telethon.utils import get_display_name
 
